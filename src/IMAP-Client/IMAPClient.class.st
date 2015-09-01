@@ -19,7 +19,7 @@ IMAPClient class >> defaultPortNumber [
 	^ 143
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #commands }
 IMAPClient >> append: aMailMessageOrString [
 	| msg response |
 	msg := (aMailMessageOrString isKindOf: String)
@@ -35,13 +35,13 @@ IMAPClient >> append: aMailMessageOrString [
 	response = 'OK' ifFalse: [self error: 'appending message failed']
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #commands }
 IMAPClient >> expunge [
 	self sendCommand: 'expunge'.
 	^ nil
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #commands }
 IMAPClient >> fetch: aStringNumberOrCollection [
 	| msgnums response index |
 "	(aStringNumberOrCollection size = 1 and: [aStringNumberOrCollection first = 0])
@@ -61,7 +61,7 @@ IMAPClient >> fetch: aStringNumberOrCollection [
 	^ fetchResults collect: [:ea | MailMessage from: ea]
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #commands }
 IMAPClient >> forMessages: aStringNumberOrCollection addFlags: aCollection [
 	| msgnums response |
 	(aStringNumberOrCollection size = 1 and: [aStringNumberOrCollection first = 0])
@@ -79,7 +79,7 @@ IMAPClient >> forMessages: aStringNumberOrCollection addFlags: aCollection [
 	response = 'OK' ifFalse: [self error: 'adding flag failed']
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'initialize - release' }
 IMAPClient >> initialize [
 	pretag := 'EMAIL'.
 	tagseq := 0.
@@ -87,12 +87,12 @@ IMAPClient >> initialize [
 	folders := Dictionary new
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #commands }
 IMAPClient >> login [
 	self show: 'IMAPClient>>login is not implemented'
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #commands }
 IMAPClient >> login: hostString user: userString password: passwdString [
 	| serverIP |
 	serverIP := (hostString at: 1) isDigit
@@ -103,12 +103,12 @@ IMAPClient >> login: hostString user: userString password: passwdString [
 	^ self sendCommand: 'login ', userString, ' ', passwdString
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #commands }
 IMAPClient >> logout [
 	^ self sendCommand: 'logout'
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'send command' }
 IMAPClient >> makeSetsOf100: aCollection [
 	"
 		change maxsetsize to 5
@@ -126,24 +126,24 @@ IMAPClient >> makeSetsOf100: aCollection [
 	^ sets
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'send command' }
 IMAPClient >> msgNumsFromCollection: aCollection [
 	^ (aCollection collect: [:ea | ea asString]) merge: ','
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'send command' }
 IMAPClient >> nextTag [
 	tagseq := tagseq + 1.
 	thistag := pretag, tagseq asString, ' '.
 	^ thistag
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #commands }
 IMAPClient >> noop [
 	^ self sendCommand: 'noop'
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'process response' }
 IMAPClient >> processFetch: aString [
 	| index length result |
 	index := aString indexOf: ${.
@@ -153,27 +153,28 @@ IMAPClient >> processFetch: aString [
 		ifTrue:
 			[length := (aString copyFrom: index + 1 to: aString size - 1) asNumber.
 			result := self stream next: length.
-self show: '<<<<<<<<',result,'>>>>>>>>>'.
+"self show: '<<<<<<<<',result,'>>>>>>>>>'."
 			self stream nextLine  "should be the ')' line"].
 	fetchResults add: aString, result
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'process response' }
 IMAPClient >> processFlagsLine: aString [
 	selectedBox flags: (aString findBetweenSubstrings: ' ')
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'process response' }
 IMAPClient >> processLogout [
 	self show: 'Logged out'.
 	state := #loggedOut
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'process response' }
 IMAPClient >> processNonTaggedLine: aString [
 	| front low items |
-	aString size < 4 ifTrue: [self error: 'string too small']. " Transcript show: 'string too small <', aString, '>'; cr. ^ nil]."
-	Transcript show: aString; cr.
+	aString size < 4 ifTrue: [self error: 'string too small']. 
+	" Transcript show: 'string too small <', aString, '>'; cr. ^ nil]."
+"	Transcript show: aString; cr."
 	low := aString asLowercase.
 	front := low copyFrom: 1 to: 4.
 	front = '* ok' ifTrue: [^ self processOkLine: (aString copyFrom: 7 to: aString size - 1)].
@@ -191,7 +192,7 @@ IMAPClient >> processNonTaggedLine: aString [
 	self unknown: 'unknown imap command' line: aString
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'process response' }
 IMAPClient >> processOkLine: aString [
 	| low front |
 	low := aString asLowercase.
@@ -203,14 +204,14 @@ IMAPClient >> processOkLine: aString [
 	self unknown: 'unknown imap ok command' line: aString
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'process response' }
 IMAPClient >> processSearch: aString [
 	searchResults := aString size = 0
 		ifFalse: [(aString split: ' ') collect: [:ea | ea asNumber]]
 		ifTrue: [OrderedCollection new]
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'process response' }
 IMAPClient >> processTaggedLine: aString [
 	| items |
 	lastResponse := aString.
@@ -220,7 +221,7 @@ IMAPClient >> processTaggedLine: aString [
 	^ items at: 2
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #internal }
 IMAPClient >> readResponse [
 	| line |
 	[true] whileTrue:
@@ -231,19 +232,19 @@ IMAPClient >> readResponse [
 			ifFalse: [self processNonTaggedLine: line]]
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #commands }
 IMAPClient >> remove: aStringNumberOrCollection [
 	^ self forMessages: aStringNumberOrCollection addFlags: #('\Deleted')
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #commands }
 IMAPClient >> search: aString [
 	searchResults := nil.
 	self sendCommand: 'search ', aString.
 	^ searchResults
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #commands }
 IMAPClient >> select: aString [
 	| quotedboxname boxname |
 	quotedboxname := (aString at: 1) = $"
@@ -254,12 +255,12 @@ IMAPClient >> select: aString [
 	^ self sendCommand: 'select ', quotedboxname
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #acccessing }
 IMAPClient >> selectedBox [
 	^ selectedBox
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'send command' }
 IMAPClient >> sendCommand: aString [
 	"could raise ConnectionTimedOut error"
 	self sendSuperCommand: (self nextTag, aString).
@@ -267,7 +268,7 @@ IMAPClient >> sendCommand: aString [
 	^ self readResponse
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'send command' }
 IMAPClient >> sendCommandNoBeginTag: aString [
 	"could raise ConnectionTimedOut error"
 	self sendSuperCommand: aString.
@@ -275,32 +276,32 @@ IMAPClient >> sendCommandNoBeginTag: aString [
 	^ self readResponse
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'send command' }
 IMAPClient >> sendCommandNoWait: aString [
 	"could raise ConnectionTimedOut error"
 	self sendSuperCommand: (self nextTag, aString).
 	fetchResults := OrderedCollection new
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'send command' }
 IMAPClient >> sendNoWait: aString [
 	"could raise ConnectionTimedOut error"
 	self sendSuperCommand: aString.
 	fetchResults := OrderedCollection new
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'send command' }
 IMAPClient >> sendSuperCommand: aString [
 	Transcript show: aString asString; cr.
 	super sendCommand: aString
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #internal }
 IMAPClient >> show: aString [
 	Transcript show: aString asString; cr
 ]
 
-{ #category : #'as yet unclassified' }
+{ #category : #'process response' }
 IMAPClient >> unknown: infoString line: lineString [
 	self show: '^^^^^^^   ', infoString, ': <', lineString, '>'
 ]
