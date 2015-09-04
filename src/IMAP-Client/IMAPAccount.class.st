@@ -144,6 +144,15 @@ IMAPAccount >> login [
 ]
 
 { #category : #accessing }
+IMAPAccount >> logout [
+	| response |
+	client ifNil: [ ^ self client ].
+	response := client logout.
+	response = 'OK'
+		ifFalse: [ self error: 'Unable to log out of IMAP' ]
+]
+
+{ #category : #accessing }
 IMAPAccount >> password [
 	"Answer the value of password"
 

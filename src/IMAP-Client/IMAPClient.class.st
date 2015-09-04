@@ -36,6 +36,11 @@ IMAPClient >> append: aMailMessageOrString [
 ]
 
 { #category : #commands }
+IMAPClient >> capability [
+	^ self sendCommand: 'capability'
+]
+
+{ #category : #commands }
 IMAPClient >> expunge [
 	self sendCommand: 'expunge'.
 	^ nil
@@ -174,7 +179,7 @@ IMAPClient >> processNonTaggedLine: aString [
 	| front low items |
 	aString size < 4 ifTrue: [self error: 'string too small']. 
 	" Transcript show: 'string too small <', aString, '>'; cr. ^ nil]."
-"	Transcript show: aString; cr."
+	Transcript show: aString; cr.
 	low := aString asLowercase.
 	front := low copyFrom: 1 to: 4.
 	front = '* ok' ifTrue: [^ self processOkLine: (aString copyFrom: 7 to: aString size - 1)].
