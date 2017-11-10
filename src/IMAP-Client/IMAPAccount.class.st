@@ -177,7 +177,7 @@ IMAPAccount >> port [
 IMAPAccount >> port: anObject [
 	"Set the value of port"
 
-	port _ anObject
+	port := anObject
 ]
 
 { #category : #accessing }

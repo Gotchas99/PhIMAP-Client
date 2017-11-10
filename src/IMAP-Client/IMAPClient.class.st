@@ -66,6 +66,11 @@ IMAPClient >> fetch: aStringNumberOrCollection [
 	^ fetchResults collect: [:ea | MailMessage from: ea]
 ]
 
+{ #category : #acccessing }
+IMAPClient >> fetchResults [
+	^ fetchResults
+]
+
 { #category : #commands }
 IMAPClient >> forMessages: aStringNumberOrCollection addFlags: aCollection [
 	| msgnums response |
@@ -168,6 +173,18 @@ IMAPClient >> processFlagsLine: aString [
 	selectedBox flags: (aString findBetweenSubstrings: ' ')
 ]
 
+{ #category : #'as yet unclassified' }
+IMAPClient >> processListLine: aString [
+ "'() ""/"" ""inbox""'"
+	| substrings item1 rootFolder folder |
+	substrings := aString substrings: '"'.
+	item1 := substrings first.
+	rootFolder := substrings second.
+	folder := substrings fourth.
+	fetchResults add: folder.
+	
+]
+
 { #category : #'process response' }
 IMAPClient >> processLogout [
 	self show: 'Logged out'.
@@ -177,23 +194,39 @@ IMAPClient >> processLogout [
 { #category : #'process response' }
 IMAPClient >> processNonTaggedLine: aString [
 	| front low items |
-	aString size < 4 ifTrue: [self error: 'string too small']. 
+	aString size < 4
+		ifTrue: [ self error: 'string too small' ].
 	" Transcript show: 'string too small <', aString, '>'; cr. ^ nil]."
-	Transcript show: aString; cr.
+	Transcript
+		show: aString;
+		cr.
 	low := aString asLowercase.
 	front := low copyFrom: 1 to: 4.
-	front = '* ok' ifTrue: [^ self processOkLine: (aString copyFrom: 7 to: aString size - 1)].
-	front = '* fl' ifTrue: [^ self processFlagsLine: (aString copyFrom: 10 to: aString size - 1)].
-	front = '* by' ifTrue: [^ self processLogout].
-	(low includesSubstring: 'expunge') ifTrue: [^ 'expunge'].
-	front = '* se' ifTrue: [^ self processSearch:
-		(aString size > 9
-			ifTrue: [(aString copyFrom: 10 to: aString size)]
-			ifFalse: [''])].
+	front = '* ok'
+		ifTrue: [ ^ self processOkLine: (aString copyFrom: 7 to: aString size - 1) ].
+	front = '* fl'
+		ifTrue: [ ^ self processFlagsLine: (aString copyFrom: 10 to: aString size - 1) ].
+	front = '* li'
+		ifTrue: [ ^ self processListLine: (aString copyFrom: 8 to: aString size) ].
+	front = '* st'
+		ifTrue: [ ^ self processStatusLine: (aString copyFrom: 10 to: aString size) ].
+	 front = '* by'
+		ifTrue: [ ^ self processLogout ].
+	(low includesSubstring: 'expunge')
+		ifTrue: [ ^ 'expunge' ].
+	front = '* se'
+		ifTrue: [ ^ self
+				processSearch:
+					(aString size > 9
+						ifTrue: [ aString copyFrom: 10 to: aString size ]
+						ifFalse: [ '' ]) ].
 	items := low findBetweenSubstrings: ' '.
-	(items last = 'exists') ifTrue: [^ selectedBox numMsgs: (items at: items size - 1) asNumber].
-	(items last = 'recent') ifTrue: [^ selectedBox numRecent: (items at: items size - 1) asNumber].
-	(items third = 'fetch') ifTrue: [^ self processFetch: aString].
+	items last = 'exists'
+		ifTrue: [ ^ selectedBox numMsgs: (items at: items size - 1) asNumber ].
+	items last = 'recent'
+		ifTrue: [ ^ selectedBox numRecent: (items at: items size - 1) asNumber ].
+	items third = 'fetch'
+		ifTrue: [ ^ self processFetch: aString ].
 	self unknown: 'unknown imap command' line: aString
 ]
 
@@ -214,6 +247,11 @@ IMAPClient >> processSearch: aString [
 	searchResults := aString size = 0
 		ifFalse: [(aString split: ' ') collect: [:ea | ea asNumber]]
 		ifTrue: [OrderedCollection new]
+]
+
+{ #category : #'as yet unclassified' }
+IMAPClient >> processStatusLine: aString [
+	fetchResults := aString
 ]
 
 { #category : #'process response' }
